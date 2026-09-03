@@ -1,7 +1,8 @@
 """Add configuration draft, immutable versions, and detection snapshots."""
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "0007_configuration_versions"
 down_revision = "0006_analytics_aggregates"

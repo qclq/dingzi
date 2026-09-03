@@ -1,7 +1,5 @@
-from fastapi.testclient import TestClient
-
 import pytest
-
+from fastapi.testclient import TestClient
 from test_auth import client as auth_client  # noqa: F401
 from test_auth import login
 

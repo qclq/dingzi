@@ -1,17 +1,26 @@
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from alembic import context
 from app.core.config import get_settings
 from app.db.base import Base
-from app.models.user import User  # noqa: F401
+from app.models.analytics import (  # noqa: F401
+    AnalyticsHeatmapHourlyBucket,
+    AnalyticsHourlyAggregate,
+)
 from app.models.detection import Defect, Detection  # noqa: F401
 from app.models.export import ExportJob  # noqa: F401
-from app.models.analytics import AnalyticsHeatmapHourlyBucket, AnalyticsHourlyAggregate  # noqa: F401
-from app.models.system import DetectionFile, MesDelivery, PasswordResetRequest, SystemLog, SystemSetting  # noqa: F401
+from app.models.system import (  # noqa: F401
+    DetectionFile,
+    MesDelivery,
+    PasswordResetRequest,
+    SystemLog,
+    SystemSetting,
+)
+from app.models.user import User  # noqa: F401
 
 config = context.config
 settings = get_settings()

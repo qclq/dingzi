@@ -1,7 +1,8 @@
 """Add hourly analytics aggregates and heatmap buckets."""
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "0006_analytics_aggregates"
 down_revision = "0005_history_fr_completion"

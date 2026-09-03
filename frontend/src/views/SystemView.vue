@@ -2,22 +2,31 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { systemApi } from '@/api/system'
+import type { Role } from '@/types/auth'
 
-const tab = ref('users'); const users = ref<any[]>([]); const audit = ref<any[]>([]); const runtime = ref<any[]>([]); const deliveries = ref<any[]>([]); const usage = ref<any>({})
-const mes = reactive<any>({ mes_url: '', auth_token: '', auto_report: false, revision: 1, token_configured: false })
-const policy = reactive<any>({ retention_days: 90, quota_gb: null, warning_percent: 80, revision: 1 })
-const form = reactive<any>({ username: '', password: '', display_name: '', email: '', role: 'operator' })
+interface ManagedUser { id: number; username: string; display_name: string | null; email: string | null; role: Role; status: 'active' | 'disabled'; last_login: string | null }
+interface LogEntry { created_at: string; level: string; source?: string; action?: string; message: string | null }
+interface MesDelivery { detection_id: number; status: string; attempts: number; last_error: string | null }
+interface FileUsage { file_count?: number; used_bytes?: number; percent?: number | null }
+interface MesConfig { mes_url: string; auth_token: string; auto_report: boolean; revision: number; token_configured: boolean }
+interface FilePolicy { retention_days: number; quota_gb: number | null; warning_percent: number; revision: number }
+interface UserForm { username: string; password: string; display_name: string; email: string; role: Role }
+
+const tab = ref('users'); const users = ref<ManagedUser[]>([]); const audit = ref<LogEntry[]>([]); const runtime = ref<LogEntry[]>([]); const deliveries = ref<MesDelivery[]>([]); const usage = ref<FileUsage>({})
+const mes = reactive<MesConfig>({ mes_url: '', auth_token: '', auto_report: false, revision: 1, token_configured: false })
+const policy = reactive<FilePolicy>({ retention_days: 90, quota_gb: null, warning_percent: 80, revision: 1 })
+const form = reactive<UserForm>({ username: '', password: '', display_name: '', email: '', role: 'operator' })
 async function loadUsers() { users.value = (await systemApi.users()).items }
 async function loadLogs() { audit.value = (await systemApi.auditLogs()).items; runtime.value = (await systemApi.systemLogs()).items }
 async function loadMes() { Object.assign(mes, await systemApi.mesConfig()); deliveries.value = await systemApi.deliveries() }
 async function loadFiles() { Object.assign(policy, await systemApi.filePolicy()); usage.value = await systemApi.fileUsage() }
 async function load() { if (tab.value === 'users') await loadUsers(); if (tab.value === 'logs') await loadLogs(); if (tab.value === 'mes') await loadMes(); if (tab.value === 'files') await loadFiles() }
 async function create() { await systemApi.createUser(form); Object.assign(form, { username: '', password: '', display_name: '', email: '', role: 'operator' }); ElMessage.success('用户已新增'); await loadUsers() }
-async function changeStatus(row: any) { await systemApi.status(row.id, row.status === 'active' ? 'disabled' : 'active'); await loadUsers() }
-async function remove(row: any) { await ElMessageBox.confirm(`删除 ${row.username} 后将保留审计记录，是否继续？`, '确认删除', { type: 'warning' }); await systemApi.removeUser(row.id); await loadUsers() }
-async function resetPassword(row: any) { await ElMessageBox.confirm(`向 ${row.email || '预留邮箱'} 发起密码重置，是否继续？`, '确认重置', { type: 'warning' }); await systemApi.passwordReset(row.id); ElMessage.success('密码重置请求已提交') }
+async function changeStatus(row: ManagedUser) { await systemApi.status(row.id, row.status === 'active' ? 'disabled' : 'active'); await loadUsers() }
+async function remove(row: ManagedUser) { await ElMessageBox.confirm(`删除 ${row.username} 后将保留审计记录，是否继续？`, '确认删除', { type: 'warning' }); await systemApi.removeUser(row.id); await loadUsers() }
+async function resetPassword(row: ManagedUser) { await ElMessageBox.confirm(`向 ${row.email || '预留邮箱'} 发起密码重置，是否继续？`, '确认重置', { type: 'warning' }); await systemApi.passwordReset(row.id); ElMessage.success('密码重置请求已提交') }
 async function downloadLogs(kind: 'audit' | 'system') { const blob = await systemApi.logCsv(kind); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `${kind}-logs.csv`; anchor.click(); URL.revokeObjectURL(url) }
-async function manualReport(row: any) { await systemApi.manualReport(row.detection_id); ElMessage.success('人工补报已提交'); await loadMes() }
+async function manualReport(row: MesDelivery) { await systemApi.manualReport(row.detection_id); ElMessage.success('人工补报已提交'); await loadMes() }
 async function saveMes() { Object.assign(mes, await systemApi.saveMesConfig(mes)); ElMessage.success('MES 配置已保存') }
 async function testMes() { const result = await systemApi.testMes(mes); ElMessage.info(`HTTP ${result.http_status ?? '未连接'}，${result.response_time_ms} ms`) }
 async function savePolicy() { Object.assign(policy, await systemApi.saveFilePolicy(policy)); ElMessage.success('文件策略已保存') }

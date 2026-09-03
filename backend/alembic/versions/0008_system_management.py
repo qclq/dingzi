@@ -1,7 +1,8 @@
 """Add Phase 7 system management storage."""
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "0008_system_management"
 down_revision = "0007_configuration_versions"

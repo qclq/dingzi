@@ -17,13 +17,14 @@
 | Phase 6 | 六类参数配置与版本管理 | TESTED |
 | Phase 7 | 用户、日志、MES、文件策略 | IN_PROGRESS |
 | Phase 8 | 完整联调、测试与性能优化 | IN_PROGRESS |
-| Phase 9 | 生产部署与最终验收（含原 Phase 10 交付范围） | IN_PROGRESS：设计完成，待用户查看 |
+| Phase 9 | 生产部署与最终验收（含原 Phase 10 交付范围） | PARTIAL：验证完成；前端 Vitest 与 Docker/真实基础设施验收 BLOCKED |
 
 ## Phase 9 当前步骤（2026-09-03）
 
 - 本轮用户指定 Phase 9 为最终阶段，按“设计 → 实现 → 验证”推进，每一步结束后停下供用户查看。
 - 已检查现有 Compose/Dockerfile/Nginx、迁移/初始化、推理/实时、文件、MES 与验收文档，形成 `docs/PHASE9_DESIGN.md`。
-- 当前只完成设计；实现、构建、全量测试、迁移和 API/容器运行验证尚未执行，不得标记最终交付完成。
+- 已完成本机验证并形成 `docs/PHASE9_VALIDATION_REPORT.md`：后端 Ruff/pytest 32/32、SQLite 迁移与 Uvicorn API smoke 通过，前端 lint/build 通过。
+- 前端 Vitest 被本机缺失 `canvas.node` 阻断；Docker CLI/Engine 不可用，Compose、MySQL、Redis、MinIO、Celery、Nginx 和真实基础设施验证均未执行，不得标记最终交付完成。
 - 本轮 PATH、默认安装目录及 Windows 服务探测未发现 Docker；前端 canvas 原生模块缺失。下文旧阶段的环境描述是历史记录，不代表当前可用状态。
 - 现有关键交付缺口：API/网关双副本、独立推理入口、跨进程 WS、MinIO 实际文件链路、幂等初始化、MES outbox 调度、真实图片显示及矩阵证据同步。
 - 原 Phase 9/10 清单保留供最终核验，统一纳入本轮 Phase 9；未经核验的旧阶段勾选或 DONE 不自动视为生产验收通过。

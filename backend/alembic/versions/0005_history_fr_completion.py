@@ -1,7 +1,8 @@
 """Complete history filters and MES work-order association."""
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "0005_history_fr_completion"
 down_revision = "0004_history_exports"

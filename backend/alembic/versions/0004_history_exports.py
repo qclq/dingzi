@@ -1,7 +1,8 @@
 """Add export jobs and history query index."""
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "0004_history_exports"
 down_revision = "0003_realtime_detections"
