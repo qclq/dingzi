@@ -16,8 +16,12 @@
 | Alembic 迁移 | PASS（SQLite） | 从空临时库在线升级至 `0008_system_management (head)`；再次执行 `upgrade head` 成功。该结果不替代 MySQL 8 验证。 |
 | API smoke | PASS（本机） | 临时 SQLite 启动隐藏 Uvicorn 后，`GET /` 返回 `dingzi-web-api` 与 `/docs`，`GET /api/v1/health` 返回数据库 `ok`。Redis 未运行，整体状态按实现为 `degraded`、Redis 为 `error`。测试进程已停止。 |
 | 代码扫描 | PASS（定向） | 未发现 `console.log`、`debugger`、`TODO`、`FIXME` 或正式应用中的 `Base.metadata.create_all()`；基准脚本的临时数据库建表不属于生产路径。 |
-| Docker Compose 配置 | BLOCKED | 本机 PATH、默认 Docker Desktop 安装目录和 Windows 服务均未发现 Docker CLI/Engine；`docker compose config --quiet` 无法执行。 |
-| MySQL/Redis/MinIO/Celery/Nginx | BLOCKED | 无 Docker 运行时和相应服务，未执行真实网络、对象存储、Worker/Beat、双 API、双网关或 HTTPS/WSS 联调。 |
+| Docker Compose 配置 | PASS | Docker Desktop 4.87.0 / Engine 29.7.2 可用，`docker compose config --quiet` 通过；为避免把本地 `node_modules` 复制进镜像，补充了前后端 `.dockerignore`。 |
+| Docker 构建与运行 | PASS（当前 Compose 范围） | `docker compose up -d --build` 成功构建前端（Node 22）与后端镜像，并运行 Nginx、frontend、web-api、MySQL、Redis、Celery Worker、Celery Beat 与 MinIO。修正 Compose 中 Celery 的应用模块为 `app.tasks`。 |
+| MySQL 迁移 | PASS | 空 Docker MySQL 8 容器执行 `alembic upgrade head`，依次成功升级至 `0008_system_management`。 |
+| Docker API smoke | PASS | 重启 Nginx 以刷新重建后的 API 上游地址后，`GET http://localhost/api/v1/health` 返回 HTTP 200，数据库与 Redis 均为 `ok`；web-api 健康检查通过，Worker 与 Beat 均已就绪。 |
+| Redis | PASS（本机与 Compose） | Windows Redis 服务返回 `PONG`；Compose Redis 容器运行，Celery Worker 已连接 `redis://redis:6379/0`。 |
+| MinIO | PARTIAL | MinIO 容器已运行并暴露 9000/9001；尚未执行私有对象上传、签名 URL 与保留策略联调。 |
 | 真实模型、相机、MES、SMTP | BLOCKED | 未提供真实运行时、设备或协议/凭据；Mock 路径不能关闭真实环境验收项。 |
 | 性能与恢复 | BLOCKED | 未进行 MySQL 100,000 条/50 并发、WS 浏览器端延迟/FPS、备份恢复或 RTO/RPO 演练。已有 SQLite 基线不作为生产结论。 |
 
@@ -25,14 +29,15 @@
 
 1. `frontend/src/views/SystemView.vue`：为用户、日志、MES 投递、文件用量、MES/文件策略和表单添加明确 TypeScript 接口，消除 12 个 lint error，不改 API 行为。
 2. `backend/alembic/env.py`、8 个历史迁移和 `backend/tests/test_system.py`：仅按 Ruff 规则调整 import 顺序；随后完整测试和迁移均通过。
+3. `frontend/.dockerignore`、`backend/.dockerignore`：排除本机依赖、构建产物、缓存和 `.env`，使 Docker 构建可复现且不会覆盖镜像内安装的依赖。
+4. `docker-compose.yml`：将 Worker/Beat 从不存在的 `app.tasks.celery_app` 模块改为实际的 `app.tasks` Celery 应用入口。
 
 ## 阻断解除条件
 
 - 前端单测：使用与生产镜像一致的 Node 22 环境执行干净依赖安装，或提供能够编译/加载 canvas 的 Windows 原生构建环境；完整 Vitest 必须通过。
-- Docker：安装并启动 Docker Engine，使 `docker compose config --quiet`、镜像构建和全栈启动可以实际执行。
-- 基础设施：在真实 Compose 环境完成 MySQL 迁移、Redis Pub/Sub、MinIO 私有对象读写/过期授权、Celery Worker/Beat、双实例 API/网关、Nginx HTTP/WS 代理检查。
+- 基础设施：完成 Redis Pub/Sub、MinIO 私有对象读写/过期授权、双实例 API/网关和 Nginx HTTP/WS 代理检查。
 - 最终验收：补齐 50 并发与性能目标、浏览器端 WS/FPS、备份恢复、故障演练以及真实模型、相机、MES、SMTP 的适用验收。
 
 ## 结论
 
-本机可执行的后端质量、SQLite 迁移与 API smoke 已通过，前端 build 已通过。前端 Vitest 和所有 Docker/真实基础设施验收仍未通过或未执行，因此本项目当前为 `PARTIAL`，不得标记 `DONE` 或正式交付完成。
+本机可执行的后端质量、SQLite 与 Docker MySQL 迁移、Docker 全栈基础服务和 API smoke 已通过，前端 build 已通过。前端 Vitest、MinIO 文件链路、双 API/实时网关、HTTPS/WSS、性能与恢复演练和真实外部设备验收仍未完成，因此本项目当前为 `PARTIAL`，不得标记 `DONE` 或正式交付完成。

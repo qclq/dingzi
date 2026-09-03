@@ -36,12 +36,12 @@ services:
   celery-worker:
     build: ./backend
     env_file: .env
-    command: celery -A app.tasks.celery_app worker --loglevel=info
+    command: celery -A app.tasks worker --loglevel=info
     depends_on: [redis, mysql]
   celery-beat:
     build: ./backend
     env_file: .env
-    command: celery -A app.tasks.celery_app beat --loglevel=info
+    command: celery -A app.tasks beat --loglevel=info
     depends_on: [redis, mysql]
   minio:
     image: minio/minio:latest

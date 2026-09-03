@@ -17,15 +17,15 @@
 | Phase 6 | 六类参数配置与版本管理 | TESTED |
 | Phase 7 | 用户、日志、MES、文件策略 | IN_PROGRESS |
 | Phase 8 | 完整联调、测试与性能优化 | IN_PROGRESS |
-| Phase 9 | 生产部署与最终验收（含原 Phase 10 交付范围） | PARTIAL：验证完成；前端 Vitest 与 Docker/真实基础设施验收 BLOCKED |
+| Phase 9 | 生产部署与最终验收（含原 Phase 10 交付范围） | PARTIAL：Docker 基础服务、MySQL 迁移与 API smoke 通过；仍有最终验收缺口 |
 
 ## Phase 9 当前步骤（2026-09-03）
 
 - 本轮用户指定 Phase 9 为最终阶段，按“设计 → 实现 → 验证”推进，每一步结束后停下供用户查看。
 - 已检查现有 Compose/Dockerfile/Nginx、迁移/初始化、推理/实时、文件、MES 与验收文档，形成 `docs/PHASE9_DESIGN.md`。
 - 已完成本机验证并形成 `docs/PHASE9_VALIDATION_REPORT.md`：后端 Ruff/pytest 32/32、SQLite 迁移与 Uvicorn API smoke 通过，前端 lint/build 通过。
-- 前端 Vitest 被本机缺失 `canvas.node` 阻断；Docker CLI/Engine 不可用，Compose、MySQL、Redis、MinIO、Celery、Nginx 和真实基础设施验证均未执行，不得标记最终交付完成。
-- 本轮 PATH、默认安装目录及 Windows 服务探测未发现 Docker；前端 canvas 原生模块缺失。下文旧阶段的环境描述是历史记录，不代表当前可用状态。
+- 前端 Vitest 被本机缺失 `canvas.node` 阻断；不得以 production build 替代单元测试。
+- Docker Desktop 引擎已验证可用：Compose 配置、镜像构建、Nginx、frontend、web-api、MySQL、Redis、Celery Worker/Beat、MinIO、Docker MySQL 迁移与 Nginx API health smoke 已通过。MinIO 文件链路、双 API/实时网关、HTTPS/WSS 与真实外部基础设施仍未验收。
 - 现有关键交付缺口：API/网关双副本、独立推理入口、跨进程 WS、MinIO 实际文件链路、幂等初始化、MES outbox 调度、真实图片显示及矩阵证据同步。
 - 原 Phase 9/10 清单保留供最终核验，统一纳入本轮 Phase 9；未经核验的旧阶段勾选或 DONE 不自动视为生产验收通过。
 
@@ -49,8 +49,8 @@
 - [x] 建立 Docker Compose、Nginx、MySQL、Redis、Celery Worker、MinIO 和环境变量模板。
 - [x] 增加 `GET /api/v1/health`，检查 Web API、MySQL 和 Redis。
 - [x] 完成前端 lint/build/test、后端 Ruff/pytest、API 根路径/健康端点和 Compose 配置验证。
-- [ ] 在 Docker Desktop 启动后运行 Compose 全栈。
-- [ ] 在 MySQL/Redis 可用后执行在线 `alembic upgrade head`。
+- [x] 在 Docker Desktop 启动后运行 Compose 全栈。
+- [x] 在 MySQL/Redis 可用后执行在线 `alembic upgrade head`。
 
 - [ ] 冻结 Phase 1 相关开放问题和 OpenAPI 基线。
 - [ ] 初始化 Vue 3 + TypeScript + Vite + Element Plus 前端。
@@ -164,8 +164,8 @@
 
 ## 当前阻塞项
 
-- 本机 Docker CLI 可用但 Docker Desktop Linux 引擎未运行，`docker compose up --build -d` 无法连接 daemon。
-- 本机 MySQL/Redis 未提供可用运行时；健康检查正确返回 `degraded`，在线迁移无法完成。
+- 前端 Vitest 因本机缺失 `canvas.node` 未通过；需要在 Node 22 的干净依赖环境中完成该项测试。
+- MinIO 私有对象读写与签名 URL、双 API/实时网关、HTTPS/WSS、性能与备份恢复尚未验收。
 - 当前环境为 32 位 Python 3.14；已将 `python-jose[cryptography]` 替换为 PyJWT，避免无法构建 cryptography。
 
 - `docs/OPEN_QUESTIONS.md` 中的接口、判定边界、枚举、阈值结构和安全策略问题必须在对应开发前冻结。
